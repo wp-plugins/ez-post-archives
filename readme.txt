@@ -43,7 +43,7 @@ Easily add custom post type archives to your theme
     
 ### Generate page heading
 
-    Ez_Post_Archives::the_title();
+    EZ_Post_Archives::the_title();
     
 ### Template files
 
