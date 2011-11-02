@@ -1,6 +1,6 @@
 === EZ Post Archives ===
 Contributors: joncowherdesign
-Tags: post archives, archives, Stable
+Tags: post archives, archives
 Requires at least: 3.2.1
 Tested up to: 3.2.1
 Stable tag: trunk
