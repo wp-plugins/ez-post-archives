@@ -2,7 +2,7 @@
 Contributors: joncowherdesign
 Tags: post archives, archives
 Requires at least: 3.2.1
-Tested up to: 3.2.1
+Tested up to: 3.3.1
 Stable tag: trunk
 
 Easily add custom post type archives to your theme
@@ -30,6 +30,12 @@ Easily add custom post type archives to your theme
         
         'type' => 'yearly',
         // either yearly or monthly
+        
+        'taxonomy' => null,
+        // optional taxonomy
+        
+        'term' => null,
+        // optional term
         
         'month_format' => '<a href="{{link}}">{{month}} {{year}}</a>',
         // format for monthly links
