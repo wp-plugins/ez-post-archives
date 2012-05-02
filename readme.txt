@@ -82,6 +82,9 @@ by going to Settings > Permalinks and simply clicking the "Save Changes" button.
 
 == Changelog ==
 
+- 1.3 =
+* Fixed fatal error with get_called_class() in PHP version < 5.3
+
 = 1.2 =
 * Added support for multiple post types
 * Fixed misc bugs

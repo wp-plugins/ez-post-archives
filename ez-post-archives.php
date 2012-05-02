@@ -3,7 +3,7 @@
 /**
  * Plugin Name: EZ Post Archives
  * Description: Allows theme developers to easily add custom post type and custom taxonomy archives to their theme
- * Version: 1.2
+ * Version: 1.3
  * Author: Jonathan Cowher
  * License: GPL2
  */
@@ -25,6 +25,18 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
 
+if (! function_exists('get_called_class')) :
+    function get_called_class()
+    {
+        $traces = debug_backtrace();
+        foreach ($traces as $trace) :
+            if (! isset($trace['class']))
+                continue;
+            return $trace['class'];
+        endforeach;
+    }
+endif;
+
 EZ_Post_Archives::init();
 
 class EZ_Post_Archives
@@ -36,7 +48,7 @@ class EZ_Post_Archives
      *
      *--------------------------------------------------------------------------------------*/
 
-    static $version = '1.2';
+    static $version = '1.3';
     
     /*--------------------------------------------------------------------------------------
      *
