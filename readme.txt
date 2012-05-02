@@ -81,5 +81,5 @@ by going to Settings > Permalinks and simply clicking the "Save Changes" button.
 
 == Changelog ==
 
-= 1.0.0 =
+= 1.0 =
 * Initial version
