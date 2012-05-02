@@ -3,7 +3,7 @@
 /**
  * Plugin Name: EZ Post Archives
  * Description: Allows theme developers to easily add custom post type and custom taxonomy archives to their theme
- * Version: 1.1
+ * Version: 1.2
  * Author: Jonathan Cowher
  * License: GPL2
  */
@@ -24,7 +24,7 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses/>
  */
- 
+
 EZ_Post_Archives::init();
 
 class EZ_Post_Archives
@@ -36,7 +36,7 @@ class EZ_Post_Archives
      *
      *--------------------------------------------------------------------------------------*/
 
-    static $version = '1.1';
+    static $version = '1.2';
     
     /*--------------------------------------------------------------------------------------
      *
@@ -54,7 +54,7 @@ class EZ_Post_Archives
         add_action('pre_get_posts', array($classname, 'alter_query'));
         
         add_filter('body_class', array($classname, 'add_body_classes'));
-        add_filter('wp_title', array($classname, 'filter_wp_title'), 11, 3);
+        add_filter('wp_title', array($classname, 'filter_wp_title'), 10, 3);
         
         register_activation_hook(__FILE__, array($classname, 'activate'));
     }
@@ -76,6 +76,7 @@ class EZ_Post_Archives
      * get($args)
      * - creates an unordered list of archive links
      *
+     * @uses $post, $wp_query
      * @param mixed $args an array or querstring of arguments
      *
      *--------------------------------------------------------------------------------------*/
@@ -132,7 +133,9 @@ class EZ_Post_Archives
         foreach ($archives as $year => $archive) :
             $yearLink = home_url() . '/archive/' . $args['post_type'] . '/' . $year . '/';
             
-            if (! empty($args['taxonomy']) && ! empty($args['term'])) :
+            if (is_array($args['post_type'])) :
+                $yearLink = home_url() . '/archive/' . implode('-and-', $args['post_type']) . '/' . $year . '/';
+            elseif (! empty($args['taxonomy']) && ! empty($args['term'])) :
                 $yearLink = home_url() . '/archive/' . $args['post_type'] . '/' . $args['taxonomy'] . '/' . $args['term'] . '/' . $year . '/';
             endif;
             
@@ -157,7 +160,9 @@ class EZ_Post_Archives
                     $monthLink = home_url() . '/archive/' . $args['post_type'] . '/' . $year . '/' . ($month < 10 ? '0' . $month : $month);
                     $monthName = date($args['month_name_format'], mktime(0, 0, 0, $month, 1));
                     
-                    if (! empty($args['taxonomy']) && ! empty($args['term'])) :
+                    if (is_array($args['post_type'])) :
+                        $monthLink = home_url() . '/archive/' . implode('-and-', $args['post_type']) . '/' . $year . '/' . ($month < 10 ? '0' . $month : $month);
+                    elseif (! empty($args['taxonomy']) && ! empty($args['term'])) :
                         $monthLink = home_url() . '/archive/' . $args['post_type'] . '/' . $args['taxonomy'] . '/' . $args['term'] . '/' . $year . '/' . ($month < 10 ? '0' . $month : $month);
                     endif;
 
@@ -185,21 +190,30 @@ class EZ_Post_Archives
      * the_title()
      * - outputs a user-friendly title for archive pages
      *
+     * @uses $wp_query
+     *
      *--------------------------------------------------------------------------------------*/
     
     function the_title()
     {
         global $wp_query;
         
-        $pt = get_post_type_object(get_query_var('post_type'));
-        
-        if (get_query_var('taxonomy') && get_query_var('term')) :
-            $term = get_term_by('slug', get_query_var('term'), get_query_var('taxonomy'));
-            echo $term->name;
+        if (! is_array(get_query_var('post_type'))) :
+            if (get_query_var('taxonomy') && get_query_var('term')) :
+                $term = get_term_by('slug', get_query_var('term'), get_query_var('taxonomy'));
+                echo $term->name;
+            else :
+                $pt = get_post_type_object(get_query_var('post_type'));
+                echo $pt->labels->singular_name;
+            endif;
         else :
-            echo $pt->labels->singular_name;
+            $pts = get_query_var('post_type');
+            foreach ($pts as $idx => $pt) :
+                $pt_obj = get_post_type_object($pt);
+                echo $pt_obj->labels->singular_name . ($idx + 1 == count($pts) ? '' : '/');
+            endforeach;
         endif;
-            
+        
         if (get_query_var('monthnum')) :
             echo ' Archives From ' . date('F Y', mktime(0, 0, 0, get_query_var('monthnum'), 1, get_query_var('year')));
         else :
@@ -238,6 +252,8 @@ class EZ_Post_Archives
      * select_template()
      * - selects the appropriate theme template page
      *
+     * @uses $wp_query
+     *
      *--------------------------------------------------------------------------------------*/
 
     function select_template()
@@ -275,9 +291,14 @@ class EZ_Post_Archives
         
         if (empty($vars['templatename'])) return;
         
+        if (strpos($vars['templatename'], '-and-') !== false) :
+            $post_types = explode('-and-', str_replace(array('archive-', '.php'), '', $vars['templatename']));
+            $query->set('post_type', $post_types);
+        endif;
+        
         $query->set('monthnum', empty($vars['mo']) ? null : $vars['mo']);
         $query->set('year', empty($vars['yr']) ? null : $vars['yr']);
-        $query->set('is_post_type_archive', 1);
+        $query->is_post_type_archive = true;
         
         if (isset($vars['taxonomy']) && isset($vars['term']))
             $query->set($vars['taxonomy'], $vars['term']);
@@ -288,6 +309,7 @@ class EZ_Post_Archives
      * add_body_classes($classes)
      * - adds additional classes to the body tag
      *
+     * @uses $wp_query
      * @param array $classes the current classes as provided by WordPress
      * @return array
      *
@@ -302,8 +324,15 @@ class EZ_Post_Archives
         if (empty($vars['templatename'])) return $classes; 
         
         $classes[] = 'ez-post-archives';
-        $classes[] = 'ez-post-archives-' . $vars['post_type'];
         
+        if (! is_array($vars['post_type'])) :
+            $classes[] = 'ez-post-archives-' . $vars['post_type'];
+        else :
+            foreach ($vars['post_type'] as $pt) :
+                $classes[] = 'ez-post-archives-' . $pt;
+            endforeach;
+        endif;
+            
         return $classes;
     }
     
@@ -312,6 +341,7 @@ class EZ_Post_Archives
      * filter_wp_title($title, $before, $sep)
      * - modifies the output of wp_title() on archive pages
      *
+     * @uses $wp_query
      * @param string $title the current page title
      * @param string $before text that shows before the title
      * @param string $after text that shows after the title
@@ -323,23 +353,32 @@ class EZ_Post_Archives
     {
         global $wp_query;
         
-        $vars = $wp_query->query_vars;
+        if (! is_post_type_archive()) return $title;
         
-        if (empty($vars['templatename'])) return $title;
+        $title = '';
         
-        $pt = get_post_type_object(get_query_var('post_type'));
-        
-        if (get_query_var('taxonomy') && get_query_var('term')) :
-            $term = get_term_by('slug', get_query_var('term'), get_query_var('taxonomy'));
-            $title = $term->name;
+        if (! is_array(get_query_var('post_type'))) :
+            if (get_query_var('taxonomy') && get_query_var('term')) :
+                $term = get_term_by('slug', get_query_var('term'), get_query_var('taxonomy'));
+                $title .= $term->name;
+            else :
+                $pt = get_post_type_object(get_query_var('post_type'));
+                $title .= $pt->labels->singular_name;
+            endif;
         else :
-            $title = $pt->labels->singular_name;
+            $pts = get_query_var('post_type');
+            foreach ($pts as $idx => $pt) :
+                $pt_obj = get_post_type_object($pt);
+                $title .= $pt_obj->labels->singular_name . ($idx + 1 == count($pts) ? '' : '/');
+            endforeach;
         endif;
-            
+        
         if (get_query_var('monthnum')) :
-            return $title . ' Archives From ' . date('F Y', mktime(0, 0, 0, get_query_var('monthnum'), 1, get_query_var('year')));
+            $title .= ' Archives From ' . date('F Y', mktime(0, 0, 0, get_query_var('monthnum'), 1, get_query_var('year')));
         else :
-            return $title . ' Archives From ' . get_query_var('year');
+            $title .= ' Archives From ' . get_query_var('year');
         endif;
+        
+        return $title;
     }
 }

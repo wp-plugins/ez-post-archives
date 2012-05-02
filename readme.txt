@@ -23,7 +23,7 @@ Easily add custom post type archives to your theme
     
     $args = array(
         'post_type' => '',
-        // the slug of the custom post type
+        // the slug(s) of the custom post type. must use an array if using multiple most types
         
         'limit' => 12,
         // sets the number of archives pulled in
@@ -81,5 +81,12 @@ by going to Settings > Permalinks and simply clicking the "Save Changes" button.
 
 == Changelog ==
 
-= 1.0.0 =
+= 1.2 =
+* Added support for multiple post types
+* Fixed misc bugs
+
+= 1.1 =
+* Added support for taxonomy archives
+
+= 1.0 =
 * Initial version
