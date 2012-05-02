@@ -5,7 +5,7 @@ Requires at least: 3.2.1
 Tested up to: 3.3.1
 Stable tag: trunk
 
-Easily add custom post type archives to your theme
+Easily add custom post type and taxonomy archives to your theme
 
 == Description ==
 
