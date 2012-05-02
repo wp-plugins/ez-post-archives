@@ -23,7 +23,8 @@ Easily add custom post type and taxonomy archives to your theme
     
     $args = array(
         'post_type' => '',
-        // the slug(s) of the custom post type. must use an array if using multiple most types
+        // the slug(s) of the custom post type.
+        // must use an array if using multiple post types
         
         'limit' => 12,
         // sets the number of archives pulled in
